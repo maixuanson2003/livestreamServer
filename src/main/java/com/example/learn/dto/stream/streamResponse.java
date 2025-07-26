@@ -1,5 +1,8 @@
 package com.example.learn.dto.stream;
 
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,12 +14,13 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class prePairStream {
-    private String streamKey;
-    private String rtmpUrl;
+public class streamResponse {
+    private Long id;
     private String title;
     private String description;
     private String thumbnailUrl;
-    private Long streamTypeId;
-
+    private String status;
+    private LocalDateTime startTime;
+    private String nameOwner;
+    private String playUrl;
 }

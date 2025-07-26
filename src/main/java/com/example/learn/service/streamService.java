@@ -1,5 +1,7 @@
 package com.example.learn.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +10,9 @@ import org.springframework.validation.BindingResult;
 
 import com.example.learn.dto.stream.prePairStream;
 import com.example.learn.dto.stream.streamRequest;
+import com.example.learn.dto.stream.streamResponse;
 import com.example.learn.entity.StreamSessions;
+import com.example.learn.mapper.streamMapper;
 import com.example.learn.repository.streamRepository;
 
 import jakarta.validation.Valid;
@@ -49,7 +53,7 @@ public class streamService {
                 .description(request.getDescription())
                 .thumbnailUrl(request.getThumbnailUrl())
                 .streamTypeId(typeStreamId)
-                .status("STARTED")
+                .status("PENDING")
                 .userId(userId)
                 .build();
         StreamSessions savedSession = streamRepository.save(streamSessions);
@@ -63,6 +67,43 @@ public class streamService {
                 .streamTypeId(typeStreamId)
                 .build();
 
+    }
+
+    public void startStream(String streamKey) {
+        StreamSessions streamData = streamRepository.findByStreamKey(streamKey);
+        LocalDateTime currentTime = LocalDateTime.now();
+        if (streamData == null) {
+            throw new RuntimeException(streamKey + " not found");
+        }
+        streamData.setStatus("LIVE");
+        streamData.setStartTime(currentTime);
+        streamRepository.save(streamData);
+    }
+
+    public void endStream(String streamKey) {
+        StreamSessions streamData = streamRepository.findByStreamKey(streamKey);
+        LocalDateTime currentTime = LocalDateTime.now();
+        if (streamData == null) {
+            throw new RuntimeException(streamKey + " not found");
+        }
+        streamData.setStatus("ENDED");
+        streamData.setEndTime(currentTime);
+        streamRepository.save(streamData);
+    }
+
+    public List<streamResponse> getAllStream() {
+        List<StreamSessions> streamSessions = streamRepository.findAll();
+        List<streamResponse> streamResponses = streamSessions
+                .stream()
+                .map(stream -> streamMapper.toResponse(stream))
+                .toList();
+        return streamResponses;
+    }
+
+    public streamResponse getStreamById(Long id) {
+        StreamSessions streamSessions = streamRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Stream not found"));
+        return streamMapper.toResponse(streamSessions);
     }
 
 }
