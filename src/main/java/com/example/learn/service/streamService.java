@@ -2,13 +2,13 @@ package com.example.learn.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Stream;
-
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
-
 import com.example.learn.dto.stream.prePairStream;
+import com.example.learn.enums.*;
 import com.example.learn.dto.stream.streamRequest;
 import com.example.learn.dto.stream.streamResponse;
 import com.example.learn.entity.StreamSessions;
@@ -21,6 +21,9 @@ import jakarta.validation.Valid;
 public class streamService {
     @Autowired
     private streamRepository streamRepository;
+    @Autowired
+    private SimpMessageSendingOperations messagingTemplate;
+
     private String BaseUrl = "http://localhost:8081/live/";
     private String rtmpBaseUrl = "rtmp://localhost:1935/stream/";
 
@@ -33,7 +36,7 @@ public class streamService {
     }
 
     private String genStreamUrl(String streamKey) {
-        return BaseUrl + streamKey + "/index.m3u8";
+        return BaseUrl + streamKey + streamQuality._720P_2628KBS.getLabel() + "/index.m3u8";
     }
 
     public prePairStream createStreamSessions(@Valid streamRequest request, BindingResult result, Long userId,
@@ -53,7 +56,7 @@ public class streamService {
                 .description(request.getDescription())
                 .thumbnailUrl(request.getThumbnailUrl())
                 .streamTypeId(typeStreamId)
-                .status("PENDING")
+                .status(streamStatus.PENDING.getLabel())
                 .userId(userId)
                 .build();
         StreamSessions savedSession = streamRepository.save(streamSessions);
@@ -75,8 +78,10 @@ public class streamService {
         if (streamData == null) {
             throw new RuntimeException(streamKey + " not found");
         }
-        streamData.setStatus("LIVE");
+        streamData.setStatus(streamStatus.LIVE.getLabel());
         streamData.setStartTime(currentTime);
+        Map<String, Object> streamDetails = Map.of("message", "stream started", "status", streamData.getStatus());
+        messagingTemplate.convertAndSend("/stream/common", streamDetails);
         streamRepository.save(streamData);
     }
 
@@ -86,8 +91,10 @@ public class streamService {
         if (streamData == null) {
             throw new RuntimeException(streamKey + " not found");
         }
-        streamData.setStatus("ENDED");
+        streamData.setStatus(streamStatus.ENDED.getLabel());
         streamData.setEndTime(currentTime);
+        Map<String, Object> streamDetails = Map.of("message", "stream ended", "status", streamData.getStatus());
+        messagingTemplate.convertAndSend("/stream/common", streamDetails);
         streamRepository.save(streamData);
     }
 
@@ -95,6 +102,7 @@ public class streamService {
         List<StreamSessions> streamSessions = streamRepository.findAll();
         List<streamResponse> streamResponses = streamSessions
                 .stream()
+                .filter(stream -> stream.getStatus().equals("LIVE"))
                 .map(stream -> streamMapper.toResponse(stream))
                 .toList();
         return streamResponses;

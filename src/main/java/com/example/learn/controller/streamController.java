@@ -11,6 +11,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,7 +31,7 @@ public class streamController {
     @Autowired
     private streamService streamService;
 
-    @PostMapping("/stream/create")
+    @PostMapping("/create")
     public ResponseEntity<?> createStream(@RequestParam Long userId, @RequestParam Long typeStreamId,
             @Valid @RequestBody streamRequest streamRequest, BindingResult result) {
         try {
@@ -50,7 +51,7 @@ public class streamController {
     }
 
     @PostMapping("/start")
-    public ResponseEntity<?> startStream(@RequestParam String streamKey) {
+    public ResponseEntity<?> startStream(@RequestParam(name = "streamKey") String streamKey) {
         try {
             streamService.startStream(streamKey);
             ApiResponse successResponse = new ApiResponse();
@@ -117,4 +118,5 @@ public class streamController {
                     .body(errorResponse);
         }
     }
+
 }

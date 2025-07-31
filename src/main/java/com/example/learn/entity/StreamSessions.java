@@ -44,6 +44,9 @@ public class StreamSessions {
     @Column(name = "end_time")
     private LocalDateTime endTime;
 
+    @Column(name = "view_count")
+    private Long viewCount;
+
     @Column(name = "playback_url")
     private String playbackUrl;
 
